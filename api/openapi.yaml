@@ -1,0 +1,226 @@
+openapi: 3.1.0
+info:
+  title: awesome-xray API
+  version: 0.1.0
+  description: >
+    Simple headless REST API for managing xray-core.
+    Clients are identified by email, and can be enabled/disabled manually.
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+
+  /health:
+    get:
+      summary: Check if API is alive
+      responses:
+        '200':
+          description: API is healthy
+
+  /clients:
+    get:
+      summary: List all clients
+      responses:
+        '200':
+          description: Array of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+
+    post:
+      summary: Add a new client by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewClientRequest'
+      responses:
+        '201':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewClientResponse'
+        '402':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /clients/{email}:
+    get:
+      summary: Get client info
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Client details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Invalid email supplied
+        '404':
+          description: Client not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Remove client
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Client deleted
+        '400':
+          description: Invalid email
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /clients/{email}/enable:
+    post:
+      summary: Enable a client
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Client enabled
+        '400':
+          description: Invalid email supplied
+        '404':
+          description: Client not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /clients/{email}/disable:
+    post:
+      summary: Disable a client
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Client disabled
+        '400':
+          description: Invalid email supplied
+        '404':
+          description: Client not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /xray/reload:
+    post:
+      summary: Reload xray-core with new config
+      responses:
+        '200':
+          description: xray-core reloaded
+
+  /xray/start:
+    post:
+      summary: Start xray-core process
+      responses:
+        '200':
+          description: xray-core started
+
+  /xray/stop:
+    post:
+      summary: Stop xray-core process
+      responses:
+        '200':
+          description: xray-core stopped
+
+  /xray/status:
+    get:
+      summary: Get xray-core status
+      responses:
+        '200':
+          description: Status OK
+
+  /api/restart:
+    post:
+      summary: Restart this API server
+      responses:
+        '200':
+          description: API restarted
+
+components:
+  schemas:
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    NewClientRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+
+    NewClientResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        uuid:
+          type: string
+        link:
+          type: string
+          format: uri
+
+    Client:
+      type: object
+      properties:
+        email:
+          type: string
+        uuid:
+          type: string
+        enabled:
+          type: boolean
